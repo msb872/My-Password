@@ -24,10 +24,18 @@
 
     h2 {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
       color: #2c3e50;
       font-size: 1.7rem;
       font-weight: bold;
+    }
+
+    #welcomeMessage {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #34495e;
+      font-size: 1.1rem;
+      line-height: 1.5;
     }
 
     .row {
@@ -225,6 +233,11 @@
 <main>
   <h2>مدیریت رمز عبور</h2>
 
+  <div id="welcomeMessage">
+    <p>به برنامه <strong>مدیریت رمز عبور</strong> خوش آمدید! این برنامه به شما کمک می‌کند تا رمزهای عبور خود را به آسانی تولید، ذخیره و مدیریت کنید.</p>
+    <p>سازنده برنامه: <strong>مصیب خانی</strong></p>
+  </div>
+
   <div class="row">
     <div style="max-width: 160px; display: flex; align-items: center; gap: 6px; margin-left: 10px;">
       <label for="pwdLength" style="white-space: nowrap;">تعداد ارقام رمز:</label>
@@ -232,11 +245,14 @@
     </div>
     <div><input type="text" id="purpose" placeholder="توضیح (مثلاً ایمیل)" /></div>
     <div><input type="text" id="category" placeholder="دسته‌بندی" /></div>
-    <div style="flex: 1.5; display: flex; flex-direction: column;">
+    <div style="flex: 1.5;">
       <input type="text" id="password" placeholder="رمز عبور" oninput="updateStrength()" autocomplete="off" />
-      <div class="strength"><div id="strengthBar" style="width:0;"></div></div>
-      <div id="strengthText"></div>
     </div>
+  </div>
+
+  <div style="margin-top: 8px;">
+    <div class="strength"><div id="strengthBar" style="width:0;"></div></div>
+    <div id="strengthText"></div>
   </div>
 
   <div class="row options-row" style="margin-bottom: 20px;">
@@ -442,11 +458,59 @@
   function generateFromInput() {
     const base = prompt("یک عبارت وارد کنید:");
     if (!base) return;
-    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    const lower = "abcdefghijklmnopqrstuvwxyz";
+    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()-_=+[]{}<>?";
+
     let pwd = "";
-    for (let i = 0; i < base.length + 4; i++) {
-      pwd += chars.charAt((base.charCodeAt(i % base.length) + i * 17) % chars.length);
+
+    for (let i = 0; i < base.length; i++) {
+      let ch = base[i];
+      const code = ch.charCodeAt(0);
+
+      if (lower.includes(ch.toLowerCase())) {
+        // حروف الفبا
+        if (Math.random() < 0.5) {
+          // 50٪ بزرگ شود
+          ch = upper[lower.indexOf(ch.toLowerCase())];
+        } else {
+          ch = lower[lower.indexOf(ch.toLowerCase())];
+        }
+        // 10٪ احتمال جایگزینی با نماد مرتبط یا عدد
+        if (Math.random() < 0.1) {
+          const symbolOrNum = Math.random() < 0.5 ? symbols : numbers;
+          ch = symbolOrNum[Math.floor(Math.random() * symbolOrNum.length)];
+        }
+      } else if (numbers.includes(ch)) {
+        // اگر عدد است، 20٪ احتمال تبدیل به نماد یا حرف
+        if (Math.random() < 0.2) {
+          const choice = Math.random();
+          if (choice < 0.5) {
+            ch = symbols[Math.floor(Math.random() * symbols.length)];
+          } else {
+            ch = lower[Math.floor(Math.random() * lower.length)];
+          }
+        }
+        // در غیر اینصورت عدد همان عدد باقی می‌ماند
+      } else {
+        // اگر نماد یا چیز دیگر است، احتمال کمی تبدیل به حروف یا نماد جدید
+        if (Math.random() < 0.3) {
+          const choices = lower + upper + numbers + symbols;
+          ch = choices[Math.floor(Math.random() * choices.length)];
+        }
+      }
+
+      pwd += ch;
     }
+
+    // اگر طول رمز کمتر از 12 بود، تا 12 کاملش کن (با اضافه کردن حروف/اعداد/نماد)
+    while (pwd.length < 12) {
+      const choices = lower + upper + numbers + symbols;
+      pwd += choices[Math.floor(Math.random() * choices.length)];
+    }
+
     document.getElementById("password").value = pwd;
     updateStrength();
   }
@@ -497,6 +561,7 @@
   };
 
   renderTable();
+  updateStrength();
 </script>
 </body>
 </html>
